@@ -1,32 +1,32 @@
 [
   {
     "id": "lru-100ms",
-    "category": "systems",
-    "problem": "Design a thread-safe LRU cache that survives process restart without losing more than the last 100ms of writes."
+    "category": "hệ thống",
+    "problem": "Thiết kế bộ nhớ đệm LRU an toàn luồng, vẫn hoạt động qua lần khởi động lại tiến trình mà không mất quá 100ms ghi cuối cùng."
   },
   {
     "id": "llm-hang-cli",
-    "category": "ux/reliability",
-    "problem": "We have a CLI that calls an LLM and the LLM sometimes hangs for 90 seconds before responding. Design the right retry/timeout/UX strategy."
+    "category": "ux/độ tin cậy",
+    "problem": "Chúng ta có CLI gọi LLM và đôi khi LLM treo 90 giây mới phản hồi. Hãy thiết kế chiến lược retry/timeout/UX phù hợp."
   },
   {
     "id": "rate-limit-leader",
-    "category": "distsys",
-    "problem": "Design a rate limiter that stays correct across a leader election. Existing leader had counters in memory; new leader takes over with no warning."
+    "category": "hệ phân tán",
+    "problem": "Thiết kế rate limiter vẫn đúng khi bầu lại leader. Leader cũ giữ counter trong bộ nhớ; leader mới tiếp quản không báo trước."
   },
   {
     "id": "fuzzy-bug",
-    "category": "debugging",
-    "problem": "0.1% of API requests time out intermittently. No stack trace, no obvious pattern, no recent deploy. How should we investigate? Generate hypothesis classes, not specific fixes."
+    "category": "gỡ lỗi",
+    "problem": "0.1% request API bị timeout ngắt quãng. Không có stack trace, không thấy mẫu hiển nhiên, không có deploy gần đây. Nên điều tra thế nào? Hãy tạo các nhóm giả thuyết, không phải bản sửa cụ thể."
   },
   {
     "id": "monolith-split",
-    "category": "refactor",
-    "problem": "We have a 200k-line Rails monolith. The team wants to split it. Generate strategies for how to decompose it — by domain, data, team, churn, or otherwise."
+    "category": "tái cấu trúc",
+    "problem": "Chúng ta có monolith Rails 200k dòng. Đội muốn tách nó ra. Hãy tạo chiến lược phân rã — theo domain, dữ liệu, đội ngũ, churn hoặc hướng khác."
   },
   {
     "id": "naming-feature-flag",
-    "category": "naming",
-    "problem": "Generate names for a feature-flag service that supports gradual rollout, kill-switches, and per-tenant overrides. The name should signal control and reversibility."
+    "category": "đặt tên",
+    "problem": "Tạo tên cho dịch vụ feature-flag hỗ trợ rollout dần, kill-switch và override theo từng tenant. Tên nên gợi cảm giác kiểm soát và khả năng đảo ngược."
   }
 ]

@@ -2,19 +2,19 @@ export type Idea = {
   id: string;
   frameId: string;
   cluster?: string;
-  text: string;        // one-line phrase, not a paragraph
-  rationale?: string;  // optional, short
+  text: string;        // cụm một dòng, không phải đoạn văn
+  rationale?: string;  // tùy chọn, ngắn
   score?: Score;
-  depth: number;       // 0 = root divergence, 1+ = deepened
+  depth: number;       // 0 = phân kỳ gốc, 1+ = đã đào sâu
   parentId?: string;
 };
 
 export type Score = {
-  novelty: number;     // 0-10, away from the obvious
-  viability: number;   // 0-10, could actually ship
-  fit: number;         // 0-10, addresses the stated problem
-  total: number;       // weighted
-  trap?: string;       // if it looks good but is a trap, why
+  novelty: number;     // 0-10, độ xa so với phương án hiển nhiên
+  viability: number;   // 0-10, có thể triển khai thực tế
+  fit: number;         // 0-10, giải quyết bài toán đã nêu
+  total: number;       // tổng có trọng số
+  trap?: string;       // nếu trông ổn nhưng là bẫy thì vì sao
 };
 
 export type Branch = {
@@ -25,13 +25,13 @@ export type Branch = {
 export type RunResult = {
   problem: string;
   reframe?: string;
-  branches: Branch[];        // raw divergence per frame
-  clusters: Cluster[];        // converged shape of the space
-  shortlist: Idea[];          // 2-4 most promising
+  branches: Branch[];        // phân kỳ thô theo từng khung
+  clusters: Cluster[];        // hình dạng không gian sau hội tụ
+  shortlist: Idea[];          // 2-4 phương án hứa hẹn nhất
   nonObviousPick: Idea | null;
   traps: Idea[];
-  deepened: DeepenedIdea[];   // top branches expanded
-  provocation: string;        // single wild-card question/idea
+  deepened: DeepenedIdea[];   // các nhánh top đã mở rộng
+  provocation: string;        // một câu hỏi/ý tưởng wildcard
 };
 
 export type Cluster = {
@@ -41,20 +41,20 @@ export type Cluster = {
 
 export type DeepenedIdea = {
   ideaId: string;
-  sketch: string;       // 4-8 sentences: how it works, key risk, first step
-  childIdeas: Idea[];   // sub-ideas surfaced while deepening
+  sketch: string;       // 4-8 câu: cách hoạt động, rủi ro chính, bước đầu tiên
+  childIdeas: Idea[];   // ý tưởng con xuất hiện khi đào sâu
 };
 
 export type RunOptions = {
   problem: string;
-  context?: string;                    // codebase snippets, constraints, stack
-  framesPerRun?: number;               // default 5
-  ideasPerFrame?: number;              // default 6
-  topK?: number;                       // how many to deepen, default 3
-  concurrency?: number;                // parallel branches, default 4
-  codeMode?: boolean;                  // bias frames toward engineering
-  model?: string;                      // override SDK model
-  onEvent?: (e: RunEvent) => void;     // stream progress to caller/CLI
+  context?: string;                    // đoạn codebase, ràng buộc, stack
+  framesPerRun?: number;               // mặc định 5
+  ideasPerFrame?: number;              // mặc định 6
+  topK?: number;                       // số ý tưởng cần đào sâu, mặc định 3
+  concurrency?: number;                // số nhánh song song, mặc định 4
+  codeMode?: boolean;                  // thiên lệch khung theo hướng kỹ thuật
+  model?: string;                      // ghi đè model SDK
+  onEvent?: (e: RunEvent) => void;     // stream tiến trình ra caller/CLI
 };
 
 export type RunEvent =

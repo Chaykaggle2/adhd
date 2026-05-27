@@ -1,38 +1,38 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Báo cáo lỗi
+about: Tạo báo cáo để giúp chúng tôi cải thiện
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Mô tả lỗi**
+Mô tả rõ ràng và ngắn gọn lỗi là gì.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Cách tái hiện**
+Các bước để tái hiện hành vi:
+1. Đi tới '...'
+2. Nhấp vào '....'
+3. Cuộn xuống '....'
+4. Thấy lỗi
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Hành vi mong đợi**
+Mô tả rõ ràng và ngắn gọn điều bạn mong đợi xảy ra.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Ảnh chụp màn hình**
+Nếu phù hợp, hãy thêm ảnh chụp màn hình để giải thích vấn đề.
 
-**Desktop (please complete the following information):**
+**Desktop (vui lòng điền thông tin sau):**
  - OS: [e.g. iOS]
  - Browser [e.g. chrome, safari]
  - Version [e.g. 22]
 
-**Smartphone (please complete the following information):**
+**Điện thoại (vui lòng điền thông tin sau):**
  - Device: [e.g. iPhone6]
  - OS: [e.g. iOS8.1]
  - Browser [e.g. stock browser, safari]
  - Version [e.g. 22]
 
-**Additional context**
-Add any other context about the problem here.
+**Ngữ cảnh bổ sung**
+Thêm mọi ngữ cảnh khác về vấn đề tại đây.

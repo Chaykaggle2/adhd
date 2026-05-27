@@ -1,10 +1,10 @@
-// Thin wrapper around the Claude Agent SDK's `query` function.
-// We use it as a stateless one-shot: each call gets a fresh session
-// with a tight system prompt and the user's problem framing.
+// Wrapper mỏng quanh hàm `query` của Claude Agent SDK.
+// Dùng theo kiểu one-shot phi trạng thái: mỗi lần gọi có một session mới
+// với system prompt ngắn gọn và khung bài toán của người dùng.
 //
-// Each divergent branch is its own query() call so they run in true
-// parallel — this is the "ADHD" fan-out. Branches don't see each other's
-// output during divergence (mixing kills idea quality).
+// Mỗi nhánh phân kỳ là một lần gọi query() riêng để chạy song song thực sự —
+// đây là cơ chế fan-out "ADHD". Các nhánh không thấy output của nhau khi
+// phân kỳ (trộn lẫn sẽ làm giảm chất lượng ý tưởng).
 
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
@@ -22,7 +22,7 @@ export async function callLLM(opts: LLMOptions): Promise<string> {
     options: {
       model: opts.model,
       systemPrompt: { type: "preset", preset: "claude_code", append: opts.systemPrompt },
-      // No tools — divergence is pure generation. Tools = convergence pressure.
+      // Không dùng tool — phân kỳ là tạo sinh thuần. Tool = áp lực hội tụ.
       allowedTools: [],
       permissionMode: "bypassPermissions",
     },
@@ -35,19 +35,19 @@ export async function callLLM(opts: LLMOptions): Promise<string> {
       }
     }
     if (message.type === "result" && message.subtype !== "success") {
-      throw new Error(`LLM call failed: ${message.subtype}`);
+      throw new Error(`Gọi LLM thất bại: ${message.subtype}`);
     }
   }
 
   return chunks.join("").trim();
 }
 
-// Strip ```json fences and parse. LLMs love to wrap.
+// Bóc lớp ```json và parse. LLM rất thích bọc rào.
 export function parseJSON<T>(raw: string): T {
   let s = raw.trim();
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fence) s = fence[1].trim();
-  // Find the first { or [ — sometimes there's a preamble despite instructions.
+  // Tìm ký tự { hoặc [ đầu tiên — đôi khi vẫn có phần mở đầu dù đã dặn.
   const firstObj = s.indexOf("{");
   const firstArr = s.indexOf("[");
   const start =

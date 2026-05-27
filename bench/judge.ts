@@ -1,42 +1,41 @@
-// LLM-as-judge.
+// Dùng LLM làm giám khảo.
 //
-// We can't ground-truth ideation, so we use a separate critic pass to score
-// two outputs (ADHD vs baseline) on the dimensions that matter for *open-ended*
-// design work: breadth, novelty, trap detection, actionability, and overall
-// usefulness to a builder.
+// Không có ground-truth cho bài toán lên ý tưởng, nên dùng một lượt phê bình
+// riêng để chấm hai đầu ra (ADHD vs baseline) theo các chiều quan trọng với
+// thiết kế *mở*: độ rộng, độ mới, phát hiện bẫy, tính khả thi hành động và
+// độ hữu ích tổng thể với người xây hệ thống.
 //
-// To reduce same-model bias: the judge runs with a system prompt that asks
-// for adversarial reading ("be a skeptical staff engineer"), and it sees BOTH
-// outputs blinded (labelled A/B in random order per problem) so positional bias
-// is balanced across runs.
+// Để giảm thiên lệch cùng-model: giám khảo chạy với system prompt yêu cầu đọc
+// phản biện ("hãy là staff engineer hoài nghi"), và thấy CẢ HAI đầu ra ở dạng
+// ẩn danh (gắn nhãn A/B ngẫu nhiên theo từng bài) để cân bằng thiên lệch vị trí.
 
 import { callLLM, parseJSON } from "../src/llm.js";
 
 export type Verdict = {
-  breadth: { a: number; b: number; reason: string };       // 0-10, range of distinct angles
-  novelty: { a: number; b: number; reason: string };       // 0-10, non-obvious-but-viable
-  trap_detection: { a: number; b: number; reason: string };// 0-10, names traps with reasons
-  actionability: { a: number; b: number; reason: string }; // 0-10, gives concrete first steps
-  builder_usefulness: { a: number; b: number; reason: string }; // 0-10, would a builder ship from this?
+  breadth: { a: number; b: number; reason: string };       // 0-10, độ rộng góc nhìn khác biệt
+  novelty: { a: number; b: number; reason: string };       // 0-10, không-hiển-nhiên nhưng khả thi
+  trap_detection: { a: number; b: number; reason: string };// 0-10, gọi tên bẫy kèm lý do
+  actionability: { a: number; b: number; reason: string }; // 0-10, có bước đầu cụ thể
+  builder_usefulness: { a: number; b: number; reason: string }; // 0-10, người xây có ship được từ đây không?
   overall_winner: "A" | "B" | "tie";
   one_line_summary: string;
 };
 
-const JUDGE_SYSTEM = `You are a skeptical staff engineer reviewing two ideation outputs (A and B)
-for the same problem. Your job is to score them on the dimensions of open-ended
-design work, not on prose polish.
+const JUDGE_SYSTEM = `Bạn là staff engineer hoài nghi, đang đánh giá hai đầu ra lên ý tưởng (A và B)
+cho cùng một bài toán. Nhiệm vụ của bạn là chấm theo các chiều của công việc
+thiết kế mở, không chấm độ bóng bẩy văn phong.
 
-You do NOT know which system produced which output. Score on substance only.
+Bạn KHÔNG biết hệ thống nào tạo ra đầu ra nào. Chỉ chấm theo thực chất.
 
-Rubric (each dimension 0-10):
-- breadth: range of structurally DISTINCT angles. 10 minor variations of one idea = low breadth.
-- novelty: how many ideas are non-obvious-but-viable. The obvious textbook answer is NOT novel.
-- trap_detection: does it name ideas that look good but are traps, with reasons?
-- actionability: does the top recommendation have a sketch, named risk, and first concrete step?
-- builder_usefulness: if you were the engineer who had to ship, which is more useful to you?
+Rubric (mỗi chiều 0-10):
+- breadth: độ rộng của các góc nhìn KHÁC BIỆT về cấu trúc. 10 biến thể nhỏ của một ý tưởng = breadth thấp.
+- novelty: có bao nhiêu ý tưởng không-hiển-nhiên nhưng khả thi. Đáp án sách giáo khoa hiển nhiên KHÔNG mới.
+- trap_detection: có gọi tên ý tưởng trông ổn nhưng là bẫy, kèm lý do không?
+- actionability: khuyến nghị top có phác thảo, rủi ro chính và bước cụ thể đầu tiên không?
+- builder_usefulness: nếu bạn là kỹ sư phải ship, cái nào hữu ích hơn?
 
-Then declare overall_winner: "A", "B", or "tie".
-Output JSON only. No prose preamble.`;
+Sau đó khai báo overall_winner: "A", "B" hoặc "tie".
+Chỉ xuất JSON. Không có đoạn mở đầu bằng văn xuôi.`;
 
 export async function judge(
   problem: string,
@@ -44,20 +43,20 @@ export async function judge(
   outputB: string,
   model?: string,
 ): Promise<Verdict> {
-  const userPrompt = `PROBLEM:
+  const userPrompt = `BÀI TOÁN:
 ${problem}
 
-OUTPUT A:
+ĐẦU RA A:
 ${outputA}
 
 ---
 
-OUTPUT B:
+ĐẦU RA B:
 ${outputB}
 
 ---
 
-Score both on the rubric. Output JSON of shape:
+Chấm cả hai theo rubric. Xuất JSON dạng:
 {
   "breadth": {"a": 0-10, "b": 0-10, "reason": "..."},
   "novelty": {"a": 0-10, "b": 0-10, "reason": "..."},

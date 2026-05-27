@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// Eval runner. Compares ADHD vs a single-shot baseline across a problem set,
-// scores both with an LLM-as-judge, writes EVALS.md with verdicts + aggregates.
+// Trình chạy eval. So sánh ADHD với baseline một phát trên bộ bài toán,
+// chấm cả hai bằng LLM làm giám khảo, ghi EVALS.md với kết luận + tổng hợp.
 //
-// Usage:
-//   npx tsx bench/run-evals.ts                  # full suite
+// Cách dùng:
+//   npx tsx bench/run-evals.ts                  # chạy đầy đủ
 //   npx tsx bench/run-evals.ts --problem lru-100ms
-//   npx tsx bench/run-evals.ts --quick          # only first 2 problems
+//   npx tsx bench/run-evals.ts --quick          # chỉ 2 bài đầu
 //
-// Order of A/B in the prompt is randomized per problem to balance positional
-// bias; the mapping is recorded so aggregates can be computed correctly.
+// Thứ tự A/B trong prompt được ngẫu nhiên theo từng bài để cân bằng thiên lệch
+// vị trí; mapping được lưu lại để tính tổng hợp chính xác.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { run } from "../src/index.js";
@@ -19,14 +19,14 @@ import { judge, type Verdict } from "./judge.js";
 type Problem = { id: string; category: string; problem: string };
 
 const BASELINE_SYSTEM =
-  "You are a thoughtful senior engineer. When asked to ideate on a problem, " +
-  "give a useful answer with multiple approaches, tradeoffs, and a recommendation. " +
-  "Be substantive but not bloated.";
+  "Bạn là kỹ sư cấp cao giàu kinh nghiệm. Khi được yêu cầu lên ý tưởng cho một bài toán, " +
+  "hãy đưa ra câu trả lời hữu ích với nhiều hướng tiếp cận, đánh đổi và khuyến nghị. " +
+  "Nội dung phải chắc tay nhưng không lan man.";
 
 async function baseline(problem: string): Promise<string> {
   return callLLM({
     systemPrompt: BASELINE_SYSTEM,
-    userPrompt: `Ideate on this engineering problem:\n\n${problem}\n\nGive the user a useful answer.`,
+    userPrompt: `Hãy lên ý tưởng cho bài toán kỹ thuật này:\n\n${problem}\n\nHãy đưa cho người dùng một câu trả lời hữu ích.`,
   });
 }
 
@@ -40,7 +40,7 @@ async function adhd(problem: string): Promise<string> {
     codeMode: true,
     onEvent: () => {},
   });
-  // Strip ANSI for the judge — color codes are noise to the model.
+  // Bỏ ANSI cho giám khảo — mã màu là nhiễu với model.
   return renderText(result).replace(/\x1b\[[0-9;]*m/g, "");
 }
 
@@ -48,7 +48,7 @@ type RowResult = {
   problemId: string;
   category: string;
   problem: string;
-  swapped: boolean;            // if true, A=baseline, B=adhd; else A=adhd, B=baseline
+  swapped: boolean;            // nếu true, A=baseline, B=adhd; ngược lại A=adhd, B=baseline
   baselineOutput: string;
   adhdOutput: string;
   verdict: Verdict;
@@ -72,24 +72,24 @@ async function main() {
   let problems = onlyId ? allProblems.filter((p) => p.id === onlyId) : allProblems;
   if (quick) problems = problems.slice(0, 2);
 
-  console.error(`▸ running ${problems.length} eval(s)`);
+  console.error(`▸ đang chạy ${problems.length} lượt eval`);
 
   const rows: RowResult[] = [];
   for (const p of problems) {
     console.error(`\n— ${p.id} (${p.category})`);
 
-    console.error("  · generating baseline…");
+    console.error("  · đang tạo baseline…");
     const baselineOutput = await baseline(p.problem);
 
-    console.error("  · generating ADHD…");
+    console.error("  · đang tạo ADHD…");
     const adhdOutput = await adhd(p.problem);
 
-    // Randomize A/B order so the judge's positional bias is balanced.
+    // Xáo trộn thứ tự A/B để cân bằng thiên lệch vị trí của giám khảo.
     const swapped = Math.random() < 0.5;
     const outA = swapped ? baselineOutput : adhdOutput;
     const outB = swapped ? adhdOutput : baselineOutput;
 
-    console.error("  · judging…");
+    console.error("  · đang chấm…");
     const verdict = await judge(p.problem, outA, outB);
 
     rows.push({
@@ -105,14 +105,14 @@ async function main() {
     const adhdLabel = swapped ? "B" : "A";
     const baseLabel = swapped ? "A" : "B";
     const adhdWon =
-      verdict.overall_winner === adhdLabel ? "ADHD wins" :
-      verdict.overall_winner === baseLabel ? "baseline wins" : "tie";
+      verdict.overall_winner === adhdLabel ? "ADHD thắng" :
+      verdict.overall_winner === baseLabel ? "baseline thắng" : "hòa";
     console.error(`  → ${adhdWon} :: ${verdict.one_line_summary}`);
   }
 
   writeReport(rows);
   writeJson(rows);
-  console.error(`\n✓ wrote EVALS.md + bench/results.json`);
+  console.error(`\n✓ đã ghi EVALS.md + bench/results.json`);
 }
 
 function adhdScore(r: RowResult, dim: keyof Verdict): number {
@@ -152,32 +152,32 @@ function writeReport(rows: RowResult[]) {
   };
 
   const lines: string[] = [];
-  lines.push(`# ADHD vs baseline — evals`);
+  lines.push(`# ADHD so với baseline — eval`);
   lines.push("");
-  lines.push(`Run: ${new Date().toISOString()} · problems: ${rows.length}`);
+  lines.push(`Lần chạy: ${new Date().toISOString()} · số bài: ${rows.length}`);
   lines.push("");
-  lines.push(`**Headline:** ADHD ${wins}W / ${losses}L / ${ties}T vs single-shot baseline.`);
+  lines.push(`**Tóm tắt:** ADHD ${wins}W / ${losses}L / ${ties}T so với baseline một phát.`);
   lines.push("");
-  lines.push(`## Aggregate scores (mean across problems, 0–10)`);
+  lines.push(`## Điểm tổng hợp (trung bình theo bài, 0–10)`);
   lines.push("");
-  lines.push(`| Dimension | ADHD | Baseline | Δ |`);
+  lines.push(`| Chiều đánh giá | ADHD | Baseline | Δ |`);
   lines.push(`| --- | ---: | ---: | ---: |`);
   for (const d of dims) {
     lines.push(`| ${d} | ${fmt(meanADHD[d])} | ${fmt(meanBase[d])} | ${delta(meanADHD[d], meanBase[d])} |`);
   }
   lines.push("");
-  lines.push(`## Per-problem verdicts`);
+  lines.push(`## Kết luận theo từng bài`);
   lines.push("");
   for (const r of rows) {
-    const winner = adhdWon(r) === "win" ? "✓ ADHD" : adhdWon(r) === "loss" ? "✗ baseline" : "= tie";
+    const winner = adhdWon(r) === "win" ? "✓ ADHD" : adhdWon(r) === "loss" ? "✗ baseline" : "= hòa";
     lines.push(`### ${r.problemId} — ${winner}`);
-    lines.push(`_${r.category} · A/B order swapped: ${r.swapped}_`);
+    lines.push(`_${r.category} · thứ tự A/B đã đảo: ${r.swapped}_`);
     lines.push("");
     lines.push(`> ${r.problem}`);
     lines.push("");
-    lines.push(`**Verdict:** ${r.verdict.one_line_summary}`);
+    lines.push(`**Kết luận:** ${r.verdict.one_line_summary}`);
     lines.push("");
-    lines.push(`| dim | ADHD | base | reason |`);
+    lines.push(`| chiều | ADHD | base | lý do |`);
     lines.push(`| --- | ---: | ---: | --- |`);
     for (const d of dims) {
       const reason = (r.verdict[d] as { reason: string }).reason.replace(/\|/g, "\\|");
@@ -187,9 +187,9 @@ function writeReport(rows: RowResult[]) {
   }
   lines.push("---");
   lines.push("");
-  lines.push(`_Methodology: each problem run through ADHD (5 frames × 6 ideas, top-3 deepened) and a single-shot baseline using the same model. A/B order randomized per problem to balance positional bias. Judged by a separate LLM call with a skeptical-staff-engineer system prompt._`);
+  lines.push(`_Phương pháp: mỗi bài chạy qua ADHD (5 khung × 6 ý tưởng, đào sâu top-3) và baseline một phát dùng cùng model. Thứ tự A/B được ngẫu nhiên theo từng bài để cân bằng thiên lệch vị trí. Chấm bằng một lượt gọi LLM riêng với system prompt staff engineer hoài nghi._`);
   lines.push("");
-  lines.push(`_Full transcripts: see \`bench/results.json\`._`);
+  lines.push(`_Toàn bộ transcript: xem \`bench/results.json\`._`);
 
   writeFileSync("EVALS.md", lines.join("\n"));
 }

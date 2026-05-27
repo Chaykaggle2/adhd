@@ -1,9 +1,9 @@
-// Terminal renderer. Matches the output shape the original skill prescribes:
-// brief → wide set (clustered) → converge (shortlist + non-obvious + traps)
-// → deepened sketches → one provocation.
+// Bộ render terminal. Khớp dạng output mà skill gốc quy định:
+// tóm tắt → tập rộng (theo cụm) → hội tụ (shortlist + không-hiển-nhiên + bẫy)
+// → bản phác thảo đã đào sâu → một câu khiêu khích.
 //
-// Walls of equally-weighted prose hide the good ideas — so we use indentation,
-// emphasis on the non-obvious pick, and small score chips.
+// Những bức tường văn xuôi đồng trọng số sẽ che mất ý tưởng hay —
+// nên dùng thụt lề, nhấn mạnh lựa chọn không-hiển-nhiên và chip điểm nhỏ.
 
 import type { Idea, RunResult } from "./types.js";
 
@@ -23,15 +23,15 @@ function chip(i: Idea): string {
 export function renderText(r: RunResult): string {
   const out: string[] = [];
 
-  out.push(bold("Problem: ") + r.problem);
+  out.push(bold("Bài toán: ") + r.problem);
   out.push("");
 
-  // Wide set, by cluster.
-  out.push(bold("Wide set"));
+  // Tập rộng theo cụm.
+  out.push(bold("Tập rộng"));
   const byCluster = new Map<string, Idea[]>();
   for (const b of r.branches) {
     for (const idea of b.ideas) {
-      const key = idea.cluster ?? "(unclustered)";
+      const key = idea.cluster ?? "(chưa gom cụm)";
       if (!byCluster.has(key)) byCluster.set(key, []);
       byCluster.get(key)!.push(idea);
     }
@@ -44,17 +44,17 @@ export function renderText(r: RunResult): string {
   }
   out.push("");
 
-  // Converge.
-  out.push(bold("Converge — shortlist"));
+  // Hội tụ.
+  out.push(bold("Hội tụ — danh sách rút gọn"));
   for (const i of r.shortlist) {
-    const mark = r.nonObviousPick?.id === i.id ? green("★ non-obvious pick → ") : "  ";
+    const mark = r.nonObviousPick?.id === i.id ? green("★ lựa chọn không-hiển-nhiên → ") : "  ";
     out.push(`  ${mark}${i.text} ${chip(i)}`);
     if (i.rationale) out.push(`    ${dim(i.rationale)}`);
   }
   out.push("");
 
   if (r.traps.length > 0) {
-    out.push(bold("Traps (look good, aren't)"));
+    out.push(bold("Bẫy (trông ổn nhưng không ổn)"));
     for (const t of r.traps) {
       out.push(`  ${red("⚠")} ${t.text}`);
       out.push(`    ${dim(t.score?.trap ?? "")}`);
@@ -62,14 +62,14 @@ export function renderText(r: RunResult): string {
     out.push("");
   }
 
-  // Deepened — the "focus" / connecting-the-dots passes.
-  out.push(bold("Focus — deepened branches"));
+  // Đào sâu — các lượt "focus" / connecting-the-dots.
+  out.push(bold("Tập trung — các nhánh đã đào sâu"));
   for (const d of r.deepened) {
     const parent = r.branches.flatMap((b) => b.ideas).find((i) => i.id === d.ideaId);
     out.push("  " + cyan("→ " + (parent?.text ?? d.ideaId)));
     out.push("    " + d.sketch.split("\n").join("\n    "));
     if (d.childIdeas.length > 0) {
-      out.push("    " + dim("branches off:"));
+      out.push("    " + dim("nhánh tách ra:"));
       for (const c of d.childIdeas) {
         out.push(`      · ${c.text}${c.rationale ? dim(" — " + c.rationale) : ""}`);
       }
@@ -77,7 +77,7 @@ export function renderText(r: RunResult): string {
     out.push("");
   }
 
-  out.push(bold("Provocation"));
+  out.push(bold("Khiêu khích"));
   out.push("  " + yellow(r.provocation));
 
   return out.join("\n");

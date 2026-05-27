@@ -1,3 +1,3 @@
-# Security Policy
+# Chính sách bảo mật
 
-## Comming Soon
+## Sắp ra mắt

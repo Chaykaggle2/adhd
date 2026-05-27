@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// CLI surface for connect-dots.
+// Bề mặt CLI cho connect-dots.
 //
-// Usage:
+// Cách dùng:
 //   connect-dots "how should we shard this queue?"
 //   connect-dots "..." --frames 6 --ideas 8 --top 4 --context ./CONTEXT.md
 //   connect-dots "..." --json > result.json
@@ -52,31 +52,31 @@ function parse(argv: string[]): Flags {
 }
 
 function printHelp() {
-  console.log(`adhd — a skill for coding agents
+  console.log(`adhd — kỹ năng dành cho coding agent
 
-  Stop your agent from picking the first answer. Fans out many parallel
-  divergent thoughts under different cognitive frames, scores them,
-  prunes traps, and deepens the survivors. Tree-of-thought with pruning,
-  built on the Claude Agent SDK.
+  Ngăn agent chọn ngay câu trả lời đầu tiên. Tỏa ra nhiều luồng tư duy
+  phân kỳ song song dưới các khung nhận thức khác nhau, chấm điểm chúng,
+  cắt bỏ bẫy và đào sâu các phương án sống sót. Tree-of-thought có cắt tỉa,
+  xây trên Claude Agent SDK.
 
-USAGE
+CÁCH DÙNG
   adhd "<problem>" [flags]
 
-FLAGS
-  --frames N        number of parallel divergence branches (default 5)
-  --ideas N         ideas per branch (default 6)
-  --top N           how many to deepen / focus on (default 3)
-  --concurrency N   max parallel LLM calls (default 4)
-  --context PATH    file to inject as context (code, constraints, stack)
-  --model NAME      override the SDK model
-  --no-code-mode    don't bias frames toward engineering
-  --json            emit RunResult as JSON
-  --quiet           suppress progress events
+CỜ
+  --frames N        số nhánh phân kỳ song song (mặc định 5)
+  --ideas N         số ý tưởng mỗi nhánh (mặc định 6)
+  --top N           số ý tưởng cần đào sâu / tập trung (mặc định 3)
+  --concurrency N   số lần gọi LLM song song tối đa (mặc định 4)
+  --context PATH    tệp nạp làm ngữ cảnh (code, ràng buộc, stack)
+  --model NAME      ghi đè model của SDK
+  --no-code-mode    không thiên lệch khung theo hướng kỹ thuật
+  --json            xuất RunResult dưới dạng JSON
+  --quiet           ẩn sự kiện tiến trình
   -h, --help
 
-EXAMPLES
-  adhd "design a rate limiter that survives a leader election"
-  adhd "name this function" --frames 3 --ideas 8 --top 2
+VÍ DỤ
+  adhd "thiết kế rate limiter vẫn đúng qua một lần bầu lại leader"
+  adhd "đặt tên hàm này" --frames 3 --ideas 8 --top 2
   adhd "..." --context ./snippet.ts --json > out.json
 `);
 }
@@ -89,9 +89,9 @@ async function main() {
     switch (e.kind) {
       case "frame:start": process.stderr.write(`  ▸ ${e.frameLabel}…\n`); break;
       case "frame:done":  process.stderr.write(`    ${e.count} ideas (${e.frameId})\n`); break;
-      case "score:done":  process.stderr.write(`  scored ${e.total} ideas\n`); break;
-      case "cluster:done":process.stderr.write(`  ${e.clusters} clusters\n`); break;
-      case "deepen:start":process.stderr.write(`  ◎ focus → ${e.text}\n`); break;
+      case "score:done":  process.stderr.write(`  đã chấm điểm ${e.total} ý tưởng\n`); break;
+      case "cluster:done":process.stderr.write(`  ${e.clusters} cụm\n`); break;
+      case "deepen:start":process.stderr.write(`  ◎ tập trung → ${e.text}\n`); break;
       case "warn":        process.stderr.write(`  ! ${e.message}\n`); break;
     }
   };

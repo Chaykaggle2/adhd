@@ -1,128 +1,128 @@
-// Frames push the generator into corners it wouldn't naturally go.
-// Each frame is a strategy for re-asking the same engineering problem
-// from a different vantage point. Pick a subset per run — don't grind all.
+// Các khung đẩy bộ tạo ý tưởng vào những góc mà nó thường không tự đi tới.
+// Mỗi khung là một chiến lược để hỏi lại cùng bài toán kỹ thuật
+// từ một góc nhìn khác. Mỗi lần chạy chỉ chọn một phần — không cần ép chạy hết.
 
 export type Frame = {
   id: string;
   label: string;
-  // The system prompt fragment injected into the divergent branch.
-  // Written as an instruction: "you are X, generate ideas as X would."
+  // Đoạn system prompt được chèn vào nhánh phân kỳ.
+  // Viết như chỉ thị: "bạn là X, hãy tạo ý tưởng như X."
   prompt: string;
-  // Engineering domain tag — used by the orchestrator to bias frame
-  // selection when the problem looks code-shaped.
+  // Nhãn miền kỹ thuật — orchestrator dùng để thiên lệch chọn khung
+  // khi bài toán có dáng dấp code.
   tags: ("code" | "design" | "general" | "wild")[];
 };
 
 export const FRAMES: Frame[] = [
   {
     id: "hardware-eyes",
-    label: "Hardware engineer",
+    label: "Kỹ sư phần cứng",
     prompt:
-      "You think in latency, memory layout, and physical constraints. Re-ask this problem as if it were a hardware/firmware problem. What does the bus topology, the cache, the timing budget tell you?",
+      "Bạn tư duy theo độ trễ, bố cục bộ nhớ và ràng buộc vật lý. Hãy hỏi lại bài toán này như thể nó là bài toán phần cứng/firmware. Topology bus, cache và ngân sách thời gian nói gì với bạn?",
     tags: ["code", "wild"],
   },
   {
     id: "regulator",
-    label: "Regulator / auditor",
+    label: "Cơ quan quản lý / kiểm toán",
     prompt:
-      "You audit systems for compliance and failure modes. What ideas surface when you ask: what must be provable, traceable, or refusable here?",
+      "Bạn kiểm toán hệ thống theo chuẩn tuân thủ và các mode lỗi. Ý tưởng nào xuất hiện khi hỏi: ở đây điều gì phải chứng minh được, truy vết được, hoặc có thể từ chối được?",
     tags: ["design", "general"],
   },
   {
     id: "ten-year-old",
-    label: "10-year-old",
+    label: "Đứa trẻ 10 tuổi",
     prompt:
-      "You are a curious 10-year-old who has never seen software before. Describe naive but unencumbered approaches. Ignore convention.",
+      "Bạn là một đứa trẻ 10 tuổi tò mò chưa từng thấy phần mềm. Hãy mô tả các cách tiếp cận ngây thơ nhưng không bị ràng buộc. Bỏ qua thông lệ.",
     tags: ["general", "wild"],
   },
   {
     id: "adversary",
-    label: "Competitor trying to break it",
+    label: "Đối thủ muốn phá nó",
     prompt:
-      "You are a hostile competitor or attacker. Generate approaches that exploit, fail, or sabotage the obvious solution. Then invert into ideas.",
+      "Bạn là đối thủ thù địch hoặc kẻ tấn công. Tạo các cách khai thác, làm hỏng hoặc phá hoại lời giải hiển nhiên. Sau đó đảo ngược thành ý tưởng.",
     tags: ["code", "design"],
   },
   {
     id: "biology",
-    label: "Cross-domain: biology",
+    label: "Liên ngành: sinh học",
     prompt:
-      "Transplant a mechanism from biology — immune systems, neural plasticity, cell signaling, evolution, gut flora — and force-fit it onto this engineering problem.",
+      "Cấy một cơ chế từ sinh học — hệ miễn dịch, tính dẻo thần kinh, tín hiệu tế bào, tiến hóa, hệ vi sinh đường ruột — và ép áp nó vào bài toán kỹ thuật này.",
     tags: ["code", "wild"],
   },
   {
     id: "logistics",
-    label: "Cross-domain: logistics / supply chain",
+    label: "Liên ngành: logistics / chuỗi cung ứng",
     prompt:
-      "Steal mechanisms from logistics: queues, batching, just-in-time, hub-and-spoke, returns, last-mile. Apply them literally to this problem.",
+      "Mượn cơ chế từ logistics: hàng đợi, gom lô, just-in-time, hub-and-spoke, hoàn trả, last-mile. Áp dụng trực tiếp chúng vào bài toán này.",
     tags: ["code", "design"],
   },
   {
     id: "game-design",
-    label: "Cross-domain: game design",
+    label: "Liên ngành: thiết kế game",
     prompt:
-      "Approach this as a game designer. What are the loops, rewards, friction, save-states, speedrun tricks? Treat the user/system as a player.",
+      "Tiếp cận như một nhà thiết kế game. Các vòng lặp, phần thưởng, ma sát, save-state, mẹo speedrun là gì? Hãy coi người dùng/hệ thống như người chơi.",
     tags: ["design", "general"],
   },
   {
     id: "markets",
-    label: "Cross-domain: markets",
+    label: "Liên ngành: thị trường",
     prompt:
-      "Treat the problem as a market. Who are the buyers, sellers, market-makers? What does an auction, a futures contract, a clearing house look like here?",
+      "Xem bài toán như một thị trường. Ai là người mua, người bán, nhà tạo lập thị trường? Đấu giá, hợp đồng tương lai, trung tâm bù trừ sẽ trông như thế nào ở đây?",
     tags: ["design", "wild"],
   },
   {
     id: "inversion",
-    label: "Inversion",
+    label: "Đảo ngược",
     prompt:
-      "Ask the OPPOSITE question. If the goal is X, brainstorm 'how would we guarantee NOT-X' — then negate each answer back into an idea.",
+      "Hãy hỏi câu ĐỐI NGƯỢC. Nếu mục tiêu là X, brainstorm 'làm sao đảm bảo KHÔNG-X' — rồi phủ định từng đáp án để biến lại thành ý tưởng.",
     tags: ["code", "design", "general"],
   },
   {
     id: "extreme-zero",
-    label: "Extreme: $0 budget, 1 hour",
+    label: "Cực hạn: ngân sách $0, 1 giờ",
     prompt:
-      "You have no money, no team, one hour. What's the crudest version that still does the load-bearing thing? Hacks, hardcoded values, manual loops welcome.",
+      "Bạn không có tiền, không có đội, chỉ một giờ. Phiên bản thô nhất nhưng vẫn gánh được phần cốt lõi là gì? Hack, hardcode, vòng lặp thủ công đều được.",
     tags: ["code", "general"],
   },
   {
     id: "extreme-infinite",
-    label: "Extreme: infinite budget, 10 years",
+    label: "Cực hạn: ngân sách vô hạn, 10 năm",
     prompt:
-      "You have infinite compute, infinite engineers, a decade. What does the maximalist version look like? What would only be possible at that scale?",
+      "Bạn có compute vô hạn, kỹ sư vô hạn, và một thập kỷ. Phiên bản tối đa chủ nghĩa sẽ trông ra sao? Chỉ ở quy mô đó mới làm được điều gì?",
     tags: ["design", "wild"],
   },
   {
     id: "remove-assumption",
-    label: "Remove the load-bearing assumption",
+    label: "Loại bỏ giả định chịu tải",
     prompt:
-      "Name the thing everyone treats as fixed in this problem (the framework, the database, the request/response model, the file system, the network). Imagine it's gone. Generate ideas that only exist in that world.",
+      "Nêu thứ mà mọi người coi là bất biến trong bài toán này (framework, database, mô hình request/response, file system, mạng). Hãy tưởng tượng nó biến mất. Tạo ý tưởng chỉ tồn tại trong thế giới đó.",
     tags: ["code", "design", "wild"],
   },
   {
     id: "speedrunner",
     label: "Speedrunner",
     prompt:
-      "You're a speedrunner. Find glitches, skips, out-of-bounds tricks, frame-perfect shortcuts. What's the abusive-but-legal path through this problem?",
+      "Bạn là speedrunner. Tìm glitch, skip, mẹo out-of-bounds, shortcut frame-perfect. Con đường lách luật nhưng hợp lệ để đi qua bài toán này là gì?",
     tags: ["code", "wild"],
   },
   {
     id: "ant-colony",
-    label: "Ant colony / swarm",
+    label: "Đàn kiến / bầy đàn",
     prompt:
-      "No central planner. Many dumb agents, local rules, pheromone trails. How does the problem solve itself emergently?",
+      "Không có bộ điều phối trung tâm. Nhiều agent đơn giản, luật cục bộ, dấu pheromone. Bài toán tự giải quyết theo cách trồi nổi như thế nào?",
     tags: ["code", "wild"],
   },
   {
     id: "ops-3am",
-    label: "On-call at 3am",
+    label: "On-call lúc 3 giờ sáng",
     prompt:
-      "You're the on-call engineer woken at 3am when this thing breaks. What design would let you not get paged? What's the runbook-shaped solution?",
+      "Bạn là kỹ sư on-call bị đánh thức lúc 3 giờ sáng khi thứ này vỡ. Thiết kế nào giúp bạn không bị pager réo nữa? Lời giải dạng runbook là gì?",
     tags: ["code", "design"],
   },
 ];
 
-// Pick N frames for a run. Bias toward engineering tags when codeMode is on,
-// but always include at least one wildcard so divergence stays weird.
+// Chọn N khung cho một lần chạy. Thiên về nhãn kỹ thuật khi bật codeMode,
+// nhưng luôn kèm ít nhất một wildcard để phân kỳ vẫn đủ "dị".
 export function selectFrames(n: number, codeMode = true): Frame[] {
   const pool = codeMode
     ? FRAMES.filter((f) => f.tags.includes("code") || f.tags.includes("design"))

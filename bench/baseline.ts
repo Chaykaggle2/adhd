@@ -1,19 +1,19 @@
-// Baseline: a regular agent — single query, no frame fan-out, no scoring,
-// no deepening. The straightforward "ask Claude for ideas on this problem"
-// that connect-dots is meant to outperform.
+// Baseline: agent thông thường — một truy vấn, không fan-out theo khung,
+// không chấm điểm, không đào sâu. Cách thẳng tay "hỏi Claude cho ý tưởng"
+// cho bài toán này mà connect-dots được kỳ vọng vượt qua.
 
 import { callLLM } from "../src/llm.js";
 
 const problem = process.argv.slice(2).join(" ");
-if (!problem) { console.error("usage: baseline.ts <problem>"); process.exit(1); }
+if (!problem) { console.error("cách dùng: baseline.ts <problem>"); process.exit(1); }
 
 const out = await callLLM({
   systemPrompt:
-    "You are a thoughtful senior engineer. When asked to ideate on a problem, " +
-    "give a useful answer with multiple approaches, tradeoffs, and a recommendation. " +
-    "Be substantive but not bloated.",
-  userPrompt: `Ideate on this engineering problem:\n\n${problem}\n\n` +
-              `Give the user a useful answer.`,
+    "Bạn là kỹ sư cấp cao giàu kinh nghiệm. Khi được yêu cầu lên ý tưởng cho một bài toán, " +
+    "hãy đưa ra câu trả lời hữu ích với nhiều hướng tiếp cận, đánh đổi và khuyến nghị. " +
+    "Nội dung phải chắc tay nhưng không lan man.",
+  userPrompt: `Hãy lên ý tưởng cho bài toán kỹ thuật này:\n\n${problem}\n\n` +
+              `Hãy đưa cho người dùng một câu trả lời hữu ích.`,
 });
 
 console.log(out);

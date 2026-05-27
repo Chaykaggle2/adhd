@@ -1,15 +1,15 @@
-// Tree-of-thought engine with pruning.
+// Engine tree-of-thought có cắt tỉa.
 //
-// The Steve-Jobs "connecting the dots" loop:
-//   1. Diverge wide — fan out N parallel branches, each running under a
-//      different cognitive frame. No critic, no cross-talk. ADHD-mode.
-//   2. Score every leaf on novelty / viability / fit.
-//   3. Cluster — surface the SHAPE of the idea space, not just the leaves.
-//   4. Prune to top-K and DEEPEN those by recursive expansion. This is
-//      where the agent "focuses" — connecting one dot to many others.
-//   5. Pick the non-obvious-but-viable one. Flag traps. Provoke once.
+// Vòng lặp "connecting the dots" kiểu Steve Jobs:
+//   1. Phân kỳ rộng — tỏa N nhánh song song, mỗi nhánh chạy dưới một
+//      khung nhận thức khác nhau. Không phê bình, không nói chuyện chéo.
+//   2. Chấm điểm từng lá theo độ mới / tính khả thi / độ phù hợp.
+//   3. Gom cụm — làm lộ HÌNH DẠNG của không gian ý tưởng, không chỉ từng lá.
+//   4. Cắt còn top-K và ĐÀO SÂU chúng bằng mở rộng đệ quy.
+//      Đây là lúc agent "tập trung" — nối một chấm với nhiều chấm khác.
+//   5. Chọn phương án không-hiển-nhiên-nhưng-khả-thi. Gắn cờ bẫy. Khiêu khích một lần.
 //
-// Convergence happens after divergence, never during.
+// Hội tụ xảy ra sau phân kỳ, không bao giờ trong lúc phân kỳ.
 
 import pLimit from "p-limit";
 import { randomUUID } from "node:crypto";
@@ -25,38 +25,38 @@ import type {
   Score,
 } from "./types.js";
 
-const DIVERGE_SYSTEM = `You are in DIVERGENT mode. You are a generator, not a critic.
-Rules:
-- Output a JSON array only. No prose before/after.
-- Generate the requested number of distinct ideas.
-- Each idea is a SHORT phrase or single sentence. No paragraphs.
-- Push past the obvious. The first 3 ideas you'd think of are banned —
-  assume the reader already had those. Aim for the awkward middle.
-- Bad, weird, and absurd ideas are welcome; they seed better ones.
-- Do not evaluate, hedge, or rank. Just generate.`;
+const DIVERGE_SYSTEM = `Bạn đang ở chế độ PHÂN KỲ. Bạn là bộ tạo ý tưởng, không phải nhà phê bình.
+Luật:
+- Chỉ xuất mảng JSON. Không thêm văn xuôi trước/sau.
+- Tạo đúng số lượng ý tưởng khác biệt được yêu cầu.
+- Mỗi ý tưởng là một cụm ngắn hoặc một câu đơn. Không viết đoạn văn.
+- Vượt qua điều hiển nhiên. 3 ý tưởng đầu tiên bạn nghĩ tới bị cấm —
+  giả định người đọc đã có chúng. Nhắm tới vùng "khó chịu" ở giữa.
+- Ý tưởng tệ, lạ, hay phi lý đều được chào đón; chúng gieo mầm cho ý tưởng tốt hơn.
+- Không đánh giá, không rào trước, không xếp hạng. Chỉ tạo ra ý tưởng.`;
 
-const SCORE_SYSTEM = `You are in CONVERGENT mode. You are now the critic.
-Score each idea on three axes 0-10:
-- novelty: distance from the obvious default solution
-- viability: could this actually ship / work in practice
-- fit: how directly it addresses the stated problem
-If the idea looks attractive but is a TRAP (hidden cost, false economy,
-will-not-scale, premature abstraction), set "trap" to a one-line reason.
-Otherwise omit "trap".
-Output JSON only.`;
+const SCORE_SYSTEM = `Bạn đang ở chế độ HỘI TỤ. Bây giờ bạn là nhà phê bình.
+Chấm mỗi ý tưởng trên ba trục 0-10:
+- novelty: mức độ xa lời giải mặc định hiển nhiên
+- viability: có thể thật sự triển khai / hoạt động trong thực tế không
+- fit: mức độ trực tiếp giải quyết bài toán đã nêu
+Nếu ý tưởng trông hấp dẫn nhưng là BẪY (chi phí ẩn, tiết kiệm giả,
+không thể mở rộng, trừu tượng hóa quá sớm), đặt "trap" là lý do một dòng.
+Nếu không thì bỏ "trap".
+Chỉ xuất JSON.`;
 
-const CLUSTER_SYSTEM = `You group ideas into 3-6 clusters by their UNDERLYING ANGLE
-(not by surface keywords). Cluster labels name the angle, e.g.
-"remove-the-server plays", "push-work-to-client plays", "cache-shaped plays".
-Output JSON only.`;
+const CLUSTER_SYSTEM = `Bạn nhóm ý tưởng thành 3-6 cụm theo GÓC NHÌN NỀN TẢNG
+(không phải theo từ khóa bề mặt). Nhãn cụm phải đặt theo góc nhìn, ví dụ:
+"nhóm bỏ máy chủ", "nhóm đẩy việc sang client", "nhóm theo hình cache".
+Chỉ xuất JSON.`;
 
-const DEEPEN_SYSTEM = `You are in FOCUS mode. Take one promising idea and connect dots:
-- Sketch how it would actually work (4-8 sentences).
-- Name the load-bearing risk.
-- Name the first concrete step a coder would take.
-- Then generate 3-5 sub-ideas that branch off this one (variations,
-  combinations with other domains, things this unlocks).
-Output JSON only.`;
+const DEEPEN_SYSTEM = `Bạn đang ở chế độ TẬP TRUNG. Lấy một ý tưởng hứa hẹn và nối các điểm:
+- Phác thảo cách nó vận hành thật sự (4-8 câu).
+- Nêu rủi ro chịu tải cốt lõi.
+- Nêu bước cụ thể đầu tiên mà lập trình viên sẽ làm.
+- Sau đó tạo 3-5 ý tưởng con tách từ nhánh này (biến thể,
+  kết hợp với miền khác, những gì nó mở khóa).
+Chỉ xuất JSON.`;
 
 async function divergeBranch(
   problem: string,
@@ -65,16 +65,16 @@ async function divergeBranch(
   ideasPerFrame: number,
   model: string | undefined,
 ): Promise<Branch> {
-  const userPrompt = `PROBLEM:
+  const userPrompt = `BÀI TOÁN:
 ${problem}
 
-${context ? `CONTEXT:\n${context}\n\n` : ""}FRAME — ${frame.label}:
+${context ? `NGỮ CẢNH:\n${context}\n\n` : ""}KHUNG — ${frame.label}:
 ${frame.prompt}
 
-Generate ${ideasPerFrame} ideas under this frame.
-Output JSON array: [{"text": "...", "rationale": "..."}]
-- text: one phrase/sentence, the idea itself
-- rationale: 1 short clause on why this frame surfaces it (optional)`;
+Tạo ${ideasPerFrame} ý tưởng trong khung này.
+Xuất mảng JSON: [{"text": "...", "rationale": "..."}]
+- text: một cụm/câu, chính là ý tưởng
+- rationale: 1 mệnh đề ngắn vì sao khung này làm lộ ý tưởng đó (tùy chọn)`;
 
   const raw = await callLLM({
     model,
@@ -107,13 +107,13 @@ async function scoreIdeas(
 ): Promise<Map<string, Score>> {
   if (ideas.length === 0) return new Map();
 
-  const userPrompt = `PROBLEM:
+  const userPrompt = `BÀI TOÁN:
 ${problem}
 
-IDEAS (id → text):
+Ý TƯỞNG (id → text):
 ${ideas.map((i) => `${i.id} :: ${i.text}`).join("\n")}
 
-Score each. Output JSON array:
+Chấm từng ý tưởng. Xuất mảng JSON:
 [{"id":"...","novelty":0-10,"viability":0-10,"fit":0-10,"trap":"... or omit"}]`;
 
   const raw = await callLLM({
@@ -132,8 +132,8 @@ Score each. Output JSON array:
 
   const out = new Map<string, Score>();
   for (const r of rows) {
-    // Weight: novelty matters because the whole point is escaping the obvious,
-    // but viability is the gatekeeper — a brilliant unshippable idea is a trap.
+    // Trọng số: novelty quan trọng vì mục tiêu là thoát khỏi lối mòn,
+    // nhưng viability là cổng kiểm soát — ý tưởng xuất sắc nhưng không triển khai được là bẫy.
     const total = r.novelty * 0.35 + r.viability * 0.4 + r.fit * 0.25;
     out.set(r.id, {
       novelty: r.novelty,
@@ -153,13 +153,13 @@ async function clusterIdeas(
 ): Promise<Cluster[]> {
   if (ideas.length === 0) return [];
 
-  const userPrompt = `PROBLEM:
+  const userPrompt = `BÀI TOÁN:
 ${problem}
 
-IDEAS:
+Ý TƯỞNG:
 ${ideas.map((i) => `${i.id} :: ${i.text}`).join("\n")}
 
-Output JSON: [{"label":"...","ideaIds":["...","..."]}]`;
+Xuất JSON: [{"label":"...","ideaIds":["...","..."]}]`;
 
   const raw = await callLLM({
     model,
@@ -180,25 +180,25 @@ async function deepenIdea(
   siblings: Idea[],
   model: string | undefined,
 ): Promise<DeepenedIdea> {
-  const userPrompt = `PROBLEM:
+  const userPrompt = `BÀI TOÁN:
 ${problem}
 
-FOCUS IDEA:
+Ý TƯỞNG TẬP TRUNG:
 ${idea.text}
 ${idea.rationale ? `(${idea.rationale})` : ""}
 
-SIBLING IDEAS (use for recombination if useful):
+Ý TƯỞNG CÙNG CẤP (dùng để tái tổ hợp nếu hữu ích):
 ${siblings
   .filter((s) => s.id !== idea.id)
   .slice(0, 12)
   .map((s) => `- ${s.text}`)
   .join("\n")}
 
-Output JSON:
+Xuất JSON:
 {
-  "sketch": "4-8 sentences. How it works. Load-bearing risk. First concrete step.",
+  "sketch": "4-8 câu. Cách hoạt động. Rủi ro chịu tải. Bước cụ thể đầu tiên.",
   "childIdeas": [
-    {"text": "...", "rationale": "variation / hybrid / unlock"}
+    {"text": "...", "rationale": "biến thể / lai ghép / mở khóa"}
   ]
 }`;
 
@@ -213,7 +213,7 @@ Output JSON:
   try {
     parsed = parseJSON<Out>(raw);
   } catch {
-    return { ideaId: idea.id, sketch: "(deepen pass failed to parse)", childIdeas: [] };
+    return { ideaId: idea.id, sketch: "(không phân tích được kết quả lượt đào sâu)", childIdeas: [] };
   }
 
   const childIdeas: Idea[] = parsed.childIdeas.map((c) => ({
@@ -244,7 +244,7 @@ export async function run(opts: RunOptions): Promise<RunResult> {
   const frames = selectFrames(framesPerRun, codeMode);
   const limit = pLimit(concurrency);
 
-  // PHASE 1 — DIVERGE. Pure parallel fan-out. No branch sees another.
+  // PHA 1 — PHÂN KỲ. Tỏa nhánh song song thuần túy. Không nhánh nào thấy nhánh khác.
   const branches = await Promise.all(
     frames.map((f) =>
       limit(async () => {
@@ -258,13 +258,13 @@ export async function run(opts: RunOptions): Promise<RunResult> {
 
   const allIdeas: Idea[] = branches.flatMap((b) => b.ideas);
 
-  // PHASE 2 — SCORE + CLUSTER. Critic comes back online.
+  // PHA 2 — CHẤM ĐIỂM + GOM CỤM. Nhà phê bình quay lại.
   const [scoreMap, clusters] = await Promise.all([
     scoreIdeas(problem, allIdeas, model),
     clusterIdeas(problem, allIdeas, model),
   ]);
   for (const i of allIdeas) i.score = scoreMap.get(i.id);
-  // Stamp cluster label onto each idea for nicer rendering.
+  // Gán nhãn cụm cho từng ý tưởng để hiển thị đẹp hơn.
   for (const c of clusters) for (const id of c.ideaIds) {
     const idea = allIdeas.find((x) => x.id === id);
     if (idea) idea.cluster = c.label;
@@ -272,14 +272,14 @@ export async function run(opts: RunOptions): Promise<RunResult> {
   onEvent?.({ kind: "score:done", total: allIdeas.length });
   onEvent?.({ kind: "cluster:done", clusters: clusters.length });
 
-  // Shortlist: top by total, excluding traps. Traps reported separately.
+  // Danh sách rút gọn: top theo tổng điểm, loại bẫy. Bẫy được báo riêng.
   const traps = allIdeas.filter((i) => i.score?.trap);
   const ranked = allIdeas
     .filter((i) => i.score && !i.score.trap)
     .sort((a, b) => (b.score!.total - a.score!.total));
   const shortlist = ranked.slice(0, Math.max(2, Math.min(4, topK + 1)));
 
-  // Non-obvious pick = highest novelty among the viable shortlist.
+  // Lựa chọn không-hiển-nhiên = novelty cao nhất trong shortlist khả thi.
   const nonObviousPick =
     shortlist.length === 0
       ? null
@@ -289,7 +289,7 @@ export async function run(opts: RunOptions): Promise<RunResult> {
             (a.score!.novelty + a.score!.viability * 0.5),
         )[0];
 
-  // PHASE 3 — FOCUS / DEEPEN top-K. This is the "connecting the dots" pass.
+  // PHA 3 — TẬP TRUNG / ĐÀO SÂU top-K. Đây là lượt "connecting the dots".
   const toDeepen = ranked.slice(0, topK);
   const deepened = await Promise.all(
     toDeepen.map((idea) =>
@@ -302,14 +302,14 @@ export async function run(opts: RunOptions): Promise<RunResult> {
     ),
   );
 
-  // One provocation = a wild-tagged frame's lowest-scoring-but-highest-novelty leaf,
-  // reframed as a question. Cheap, doesn't need another LLM call.
+  // Một câu khiêu khích = lá có novelty cao nhất (từ khung wild), diễn đạt lại thành câu hỏi.
+  // Rẻ, không cần gọi LLM thêm.
   const wildcard = allIdeas
     .filter((i) => i.score)
     .sort((a, b) => b.score!.novelty - a.score!.novelty)[0];
   const provocation = wildcard
-    ? `What if we took this seriously: ${wildcard.text}`
-    : "What's the assumption nobody named yet?";
+    ? `Nếu ta nghiêm túc làm điều này thì sao: ${wildcard.text}`
+    : "Giả định nào mà chưa ai gọi tên?";
 
   return {
     problem,

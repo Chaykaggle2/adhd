@@ -1,144 +1,83 @@
-# Contributing to ADHDStack
+# Hướng dẫn đóng góp
 
-Thanks for caring. ADHD is small on purpose — the value lives in the *frames* and the *loop discipline*, not the LOC. Most contributions will be one of:
+Cảm ơn bạn đã quan tâm đóng góp cho **ADHD**.
+Mục tiêu của tài liệu này là giúp bạn gửi thay đổi nhanh, rõ và dễ review.
 
-1. **A new frame** (highest leverage, smallest change)
-2. **An improvement to the diverge/score/cluster/deepen loop**
-3. **A new eval problem** that exposes where ADHD wins or loses
-4. **Docs / examples / launch material**
+## Trước khi bắt đầu
 
----
+- Đọc `README.md`, `SOURCE-SPEC.md`, và `skills/adhd/SKILL.md`.
+- Kiểm tra issue hiện có để tránh trùng lặp.
+- Với thay đổi lớn, nên mở issue thảo luận trước.
 
-## Dev setup
+## Thiết lập môi trường
 
 ```bash
-git clone https://github.com/UditAkhourii/adhd.git
-cd adhd
-npm install
+npm ci
+npm run typecheck
 npm run build
-export ANTHROPIC_API_KEY=...   # or rely on local Claude Code auth
-node dist/cli.js "your test problem here"
 ```
 
-Iterating without rebuilding:
+## Quy ước chung
 
-```bash
-npm run dev -- "your test problem here"   # tsx, no build step
-```
+- Giữ thay đổi **nhỏ, tập trung, có mục đích rõ ràng**.
+- Không sửa các phần không liên quan.
+- Giữ TypeScript đúng kiểu và không phá API công khai nếu không cần thiết.
+- Khi chỉnh prompt hoặc text hiển thị, ưu tiên rõ ràng và nhất quán thuật ngữ.
 
----
+## Quy trình đề xuất
 
-## Authoring a new frame
+1. Fork và tạo nhánh mới.
+2. Thực hiện thay đổi tối thiểu để giải quyết vấn đề.
+3. Chạy `npm run typecheck` và `npm run build`.
+4. Cập nhật tài liệu nếu thay đổi tác động tới người dùng.
+5. Gửi PR với mô tả ngắn gọn: vấn đề, cách sửa, cách kiểm chứng.
 
-A frame is the cheapest, highest-leverage contribution. Every new frame widens what the package can surface for the next user.
+## Quy tắc cho mã nguồn
 
-**A good frame** pushes the generator into a corner it would not naturally drift toward. Bad frames are paraphrases of an existing one.
+### `src/`
 
-### The shape
+- `engine.ts`: logic phân kỳ/hội tụ, chấm điểm, gom cụm, đào sâu.
+- `frames.ts`: thư viện khung nhận thức.
+- `render.ts`: hiển thị CLI.
+- `cli.ts`: phân tích cờ dòng lệnh.
+- `llm.ts`: gọi SDK và parse JSON.
 
-In [`src/frames.ts`](./src/frames.ts), append to the `FRAMES` array:
+Khi sửa các file này, vui lòng:
 
-```ts
-{
-  id: "supply-chain-attacker",
-  label: "Supply-chain attacker",
-  prompt:
-    "You compromise software by attacking what people TRUST: package managers, build tools, " +
-    "CI runners, vendored dependencies, mirror infrastructure. Re-ask this problem as: what " +
-    "would I plant, and where, to compromise the result without touching the application code?",
-  tags: ["code", "design", "wild"],
-},
-```
+- Bảo toàn tách biệt giữa generator và critic.
+- Không làm rò rỉ ngữ cảnh giữa các nhánh phân kỳ.
+- Tránh tăng độ phức tạp không cần thiết.
 
-Fields:
+### `bench/`
 
-| Field | What |
-|---|---|
-| `id` | kebab-case, stable forever — don't rename |
-| `label` | shown to the user; ~3 words |
-| `prompt` | the vantage prompt. Written as instruction to the generator: *"You are X. Re-ask this as Y."* |
-| `tags` | any of `"code"`, `"design"`, `"general"`, `"wild"`. Tags affect frame selection — `code-mode` (default) biases toward `code`/`design`; `wild` always has one slot reserved per run. |
+- Cập nhật benchmark khi thay đổi ảnh hưởng logic chấm điểm hoặc output.
+- Tránh hardcode kết quả mong muốn theo model cụ thể.
 
-### Quality bar
+## Commit message
 
-A new frame should pass at least two of these:
+Nên dùng dạng rõ nghĩa, ví dụ:
 
-- **Distinct vocabulary** — the prompt uses concepts (latency budget, pheromone trails, futures contracts, frame-perfect skip) that none of the existing frames use.
-- **Distinct posture** — adversarial vs constructive vs naive vs maximalist. Not just a different domain saying the same thing.
-- **Reproducible distortion** — running the same problem through this frame consistently surfaces ideas the other frames don't.
+- `feat: add frame for reliability operations`
+- `fix: prevent invalid JSON parse fallback`
+- `docs: clarify cli flags in README`
 
-### Test it
+## Báo lỗi và đề xuất tính năng
 
-Run your frame in isolation and check that the ideas are *structurally different* from what the other frames produce on the same problem:
+Dùng mẫu issue trong `.github/ISSUE_TEMPLATE/`:
 
-```bash
-# tweak src/cli.ts or write a quick scratch script that forces selectFrames
-# to return just your new frame, then run:
-npm run dev -- "design a write-ahead log under bursty load"
-```
+- `bug_report.md`
+- `feature_request.md`
 
-If the ideas are paraphrases of what the "hardware" or "logistics" frame already produces, the frame isn't earning its slot. Iterate the prompt.
+## Chính sách hành vi
 
----
+Khi tham gia dự án, bạn đồng ý tuân thủ `CODE_OF_CONDUCT.md`.
 
-## Adding an eval problem
+## Câu hỏi
 
-Eval problems live in [`bench/problems.json`](./bench/problems.json). A good eval problem has:
+Nếu chưa chắc cách triển khai, hãy mở issue và nêu:
 
-- An **open-ended** answer space (not "what's the syntax for X")
-- A **non-trivial obvious answer** (so the baseline has something credible to fall back on)
-- A **specific constraint** that rewards non-obvious thinking (the "100ms" or "leader election" in the existing problems)
-- A **category** that's not already over-represented
+- Bối cảnh
+- Ràng buộc
+- Các hướng bạn đã thử
 
-Then run:
-
-```bash
-npm run build
-npm run evals               # full suite
-npm run evals -- --problem your-new-id   # just yours
-```
-
-Output is `EVALS.md` + `bench/results.json`. Costs ~10 LLM calls per problem (5 frames + score + cluster + 3 deepen + 1 baseline + 1 judge).
-
----
-
-## Loop changes (engine.ts)
-
-The loop is small on purpose. Before changing it, read the source spec in [SKILL.md](./SKILL.md) — most "improvements" violate the load-bearing invariants:
-
-- **Branches must not see each other during divergence.** This is the whole point.
-- **Generator and critic must use separate LLM calls with opposite system prompts.** Don't merge them for efficiency.
-- **Score before deepen.** Deepening unscored ideas is just expensive generation.
-- **Cluster by underlying angle, not surface keywords.** If the cluster pass starts outputting `"caching ideas"` instead of `"remove-the-server plays"`, the prompt has drifted.
-
-If your change weakens any of these, the bar is higher.
-
-Good loop changes:
-- recursive deepen (multi-level ToT)
-- pluggable scorers (let users supply their own weights / trap detectors)
-- streaming output during divergence
-- cross-model support (frames don't depend on Claude)
-
----
-
-## Style
-
-- TypeScript strict mode. No `any` unless commented why.
-- Comments are for **why**, not what. Code shows what.
-- New deps need justification. Current deps: `@anthropic-ai/claude-agent-sdk`, `p-limit`, `zod`. That's already three more than the loop strictly needs.
-- No emojis in source (renderer is allowed terminal symbols).
-
----
-
-## PRs
-
-- One concern per PR.
-- New frame? Include a 2-line "what this frame catches that others miss" in the PR body.
-- New eval? Include the run output.
-- Loop change? Include before/after on at least one eval problem.
-
----
-
-## License
-
-By contributing, you agree your contribution is licensed under MIT.
+Chúng tôi sẽ hỗ trợ bạn chọn hướng phù hợp.

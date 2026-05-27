@@ -6,6 +6,9 @@ loại bẫy, rồi đào sâu các phương án tốt nhất.
 
 > Tree-of-thought có cắt tỉa, xây trên Claude Agent SDK.
 
+> Lưu ý: README tiếng Việt này tập trung vào phần thực hành nhanh. Chi tiết đầy đủ
+> về phương pháp và đánh giá xem thêm `docs/index.html`, `SOURCE-SPEC.md`, `EVALS.md`.
+
 ## Vì sao dùng ADHD?
 
 Khi bài toán cần **khám phá nhiều hướng** (kiến trúc, refactor, gỡ lỗi mơ hồ, đặt tên,
